@@ -34,8 +34,12 @@ import { bugs, website, server } from "variables/general.js";
 import {
   dailySalesChart,
   emailsSubscriptionChart,
-  completedTasksChart
+  completedTasksChart,
 } from "variables/charts.js";
+import { cpuOptionsChart } from "variables/custom-charts.js";
+
+//extra library
+import axios from "axios";
 
 import styles from "assets/jss/material-dashboard-react/views/dashboardStyle.js";
 
@@ -43,6 +47,59 @@ const useStyles = makeStyles(styles);
 
 export default function Dashboard() {
   const classes = useStyles();
+  const initData = {
+    labels: ["M", "T", "W", "T", "F", "S", "S"],
+    series: [[12, 17, 7, 17, 23, 18, 38]],
+  };
+  const [cpuData, setCpuData] = React.useState(initData);
+
+  function handleCpuData() {
+    axios
+      .get("http://localhost:4001/")
+      .then((res) => {
+        console.log("Response from main API: ", res);
+        console.log("Data from API: ", res.data);
+        //example response:
+        //{
+        //     "labels": [
+        //       "M",
+        //       "T",
+        //       "W",
+        //       "T",
+        //       "F",
+        //       "S",
+        //       "S"
+        //   ],
+        //   "series": [
+        //       [
+        //           56,
+        //           62,
+        //           61,
+        //           62,
+        //           24,
+        //           89,
+        //           73
+        //       ]
+        //   ]
+        // }
+        const resData = res.data;
+        setCpuData(resData);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+
+  React.useEffect(() => {
+    const intervalId = setInterval(() => {
+      handleCpuData();
+    }, 5000);
+    return () => {
+      //cleanup when component DidUnmount
+      clearInterval(intervalId);
+    };
+  }, []);
+
   return (
     <div>
       <GridContainer>
@@ -62,7 +119,7 @@ export default function Dashboard() {
                 <Danger>
                   <Warning />
                 </Danger>
-                <a href="#pablo" onClick={e => e.preventDefault()}>
+                <a href="#pablo" onClick={(e) => e.preventDefault()}>
                   Get more space
                 </a>
               </div>
@@ -196,6 +253,30 @@ export default function Dashboard() {
         </GridItem>
       </GridContainer>
       <GridContainer>
+        <GridItem xs={12} sm={12} md={8}>
+          <Card chart>
+            <CardHeader color="success">
+              <ChartistGraph
+                className="ct-chart"
+                data={cpuData}
+                type="Line"
+                options={cpuOptionsChart.options}
+                listener={cpuOptionsChart.animation}
+              />
+            </CardHeader>
+            <CardBody>
+              <h4 className={classes.cardTitle}>CPU usage</h4>
+            </CardBody>
+            <CardFooter chart>
+              <div className={classes.stats}>
+                <AccessTime /> updated 5 minutes ago
+              </div>
+            </CardFooter>
+          </Card>
+        </GridItem>
+      </GridContainer>
+
+      <GridContainer>
         <GridItem xs={12} sm={12} md={6}>
           <CustomTabs
             title="Tasks:"
@@ -210,7 +291,7 @@ export default function Dashboard() {
                     tasksIndexes={[0, 1, 2, 3]}
                     tasks={bugs}
                   />
-                )
+                ),
               },
               {
                 tabName: "Website",
@@ -221,7 +302,7 @@ export default function Dashboard() {
                     tasksIndexes={[0, 1]}
                     tasks={website}
                   />
-                )
+                ),
               },
               {
                 tabName: "Server",
@@ -232,8 +313,8 @@ export default function Dashboard() {
                     tasksIndexes={[0, 1, 2]}
                     tasks={server}
                   />
-                )
-              }
+                ),
+              },
             ]}
           />
         </GridItem>
@@ -253,7 +334,7 @@ export default function Dashboard() {
                   ["1", "Dakota Rice", "$36,738", "Niger"],
                   ["2", "Minerva Hooper", "$23,789", "Curaçao"],
                   ["3", "Sage Rodriguez", "$56,142", "Netherlands"],
-                  ["4", "Philip Chaney", "$38,735", "Korea, South"]
+                  ["4", "Philip Chaney", "$38,735", "Korea, South"],
                 ]}
               />
             </CardBody>
